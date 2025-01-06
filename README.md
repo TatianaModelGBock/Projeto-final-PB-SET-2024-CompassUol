@@ -18,4 +18,7 @@ A proposta é migrar o ambiente para a **AWS** em duas fases:
 - **back01**: Backend com 3 APIs + Nginx (5GB, 4GB RAM, 2 vCPUs)  
 - **Nginx** também atua como balanceador de carga e armazenamento de estáticos (imagens, arquivos, etc.).
 
+## Diagrama da arquitetura:
+![diagrama](https://github.com/TatianaModelGBock/Projeto-final-PB-SET-2024-CompassUol/blob/main/images/arq-on-premise.jpg)
+
 
