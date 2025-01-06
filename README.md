@@ -30,7 +30,6 @@ Na primeira fase, a ideia é levar rapidamente os servidores on-premises para a 
 Ferramentas utilizadas:
 - **AWS MGN (Application Migration Service)**: realiza a replicação do servidor (sistema operacional, aplicações) para instâncias EC2.  
 - **AWS Replication Agent**: realiza uma migração segura de dados para dentro de uma subrede migratória.
-- **AWS S3 (Simple Storage Service)**: armazenará arquivos estáticos necessários.
 - **AWS EBS (Elastic Block System)**: armzenará os arquivos persistentes do banco de dados.
 
 ### Passo a Passo de Migração
@@ -51,7 +50,7 @@ Ferramentas utilizadas:
 
 4. **Migração de Frontend/Backend**  
    - Usar **AWS MGN** para replicar as máquinas on-premises em instâncias EC2.  
-   - Usar **AWS EBS** e **AWS S3** para hospedar os arquivos advindos das máquinas
+   - Usar **AWS EBS** para hospedar os arquivos advindos das máquinas
 
 5. **Teste e Validação**  
    - Apontar subdomínio (ex.: `test.minhaempresa.com`) para o IP ou ALB da aplicação na AWS.  
