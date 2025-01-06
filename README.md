@@ -2,41 +2,20 @@
 
 ## Cloud Pratictioner - PB - SET 2024
 
-## 1. Contexto
+## Contexto
+A **Fast Engineering S/A** enfrenta desafios de escalabilidade e disponibilidade para seu e-commerce. Atualmente, todo o stack roda **on-premises**, mas o crescimento da demanda exige uma arquitetura mais flexível e resiliente.  
+A proposta é migrar o ambiente para a **AWS** em duas fases:
 
-Nós somos da empresa "Fast Engineering S/A" e gostaríamos de uma solução dos
-senhores(as), que fazem parte da empresa terceira "TI SOLUÇÕES INCRÍVEIS".
-Nosso eCommerce está crescendo e a solução atual não está atendendo mais a alta
-demanda de acessos e compras que estamos tendo.
-Atualmente usamos:
-•
-•
-•
-01 servidor para Banco de Dados Mysql (500GB de dados, 10Gb de RAM, 3 Core
-CPU);
-01 servidor para a aplicação utilizando REACT – frontend (5GB de dados, 2Gb de
-RAM, 1 Core CPU);
-01 servidor de backend com 3 APIs, com o Nginx servindo de balanceador de
-carga e que armazena estáticos como fotos e links. (5GB de dados, 4Gb de RAM,
-2 Core CPU);
+1. **Fase 1**: Migração “Lift and Shift” (o mais rápido possível, mantendo a aplicação como está).  
+2. **Fase 2**: Modernização com contêineres (EKS), banco gerenciado (RDS), armazenamento de objetos (S3), reforço de segurança etc.
 
+---
 
+## Arquitetura Atual (On-Premises)
 
-Queremos modernizar esse sistema para a AWS, precisamos seguir as melhores
-práticas arquitetura em Cloud AWS, a nova arquitetura deve seguir as seguintes
-diretrizes:
+- **db01**: Servidor MySQL (500GB, 10GB RAM, 3 vCPUs)  
+- **front01**: Frontend em React (5GB, 2GB RAM, 1 vCPU)  
+- **back01**: Backend com 3 APIs + Nginx (5GB, 4GB RAM, 2 vCPUs)  
+- **Nginx** também atua como balanceador de carga e armazenamento de estáticos (imagens, arquivos, etc.).
 
-• Ambiente Kubernetes;
-
-• Banco de dados gerenciado (PaaS e Multi AZ);
-
-• Backup de dados;
-
-• Sistema para persistência de objetos (imagens, vídeos etc.);
-
-• Segurança; 
-
-Porém antes da migração acontecer para a nova estrutura, precisamos fazer uma
-migração “lift-and-shift” ou “as-is”, o mais rápido possível, só depois que iremos
-promover a modificação para a nova estrutura em Kubernetes.
 
