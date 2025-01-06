@@ -21,4 +21,42 @@ A proposta é migrar o ambiente para a **AWS** em duas fases:
 ## Diagrama da arquitetura:
 ![diagrama](https://github.com/TatianaModelGBock/Projeto-final-PB-SET-2024-CompassUol/blob/main/images/arq-on-premise.jpg)
 
+---
+
+## Fase 1: Migração “As-Is” (Lift and Shift)
+
+### Visão Geral
+Na primeira fase, a ideia é levar rapidamente os servidores on-premises para a AWS, **sem grandes refatorações** de código ou mudança de arquitetura.  
+Ferramentas utilizadas:
+- **AWS MGN (Application Migration Service)**: realiza a replicação do servidor (sistema operacional, aplicações) para instâncias EC2.  
+- **AWS Replication Agent**: realiza uma migração segura de dados para dentro de uma subrede migratória.
+- **AWS S3 (Simple Storage Service)**: armazenará arquivos estáticos necessários.
+- **AWS EBS (Elastic Block System)**: armzenará os arquivos persistentes do banco de dados.
+
+### Passo a Passo de Migração
+1. **Planejamento**  
+   - Inventariar serviços e dependências (versão do SO, portas, bibliotecas, integrações externas).
+
+2. **Provisionamento de Infraestrutura AWS**  
+   - **Criar VPC** com subnets públicas e privadas.  
+   - **Internet Gateway** (IGW) para subnets públicas. 
+   - **Security Groups**:  
+     - Acesso restrito ao MySQL (porta 3306) só a partir do backend.  
+     - Acesso ao backend (porta 80/443).
+
+3. **Migração do Banco de Dados**  
+   - Criar uma instância **EC2 MySQL** (Lift and Shift total).  
+   - Copiar dados via **AWS Replication Agent** (TCP 1500).  
+   - Testar **integridade** e **performance** do banco no ambiente de destino.
+
+4. **Migração de Frontend/Backend**  
+   - Usar **AWS MGN** para replicar as máquinas on-premises em instâncias EC2.  
+   - Usar **AWS EBS** e **AWS S3** para hospedar os arquivos advindos das máquinas
+
+5. **Teste e Validação**  
+   - Apontar subdomínio (ex.: `test.minhaempresa.com`) para o IP ou ALB da aplicação na AWS.  
+   - Verificar logs, monitorar performance.
+
+
+### Diagrama “As-Is” (Exemplo)
 
