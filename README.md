@@ -59,7 +59,7 @@ Ferramentas utilizadas:
 
 ## Diagrama “Lift-and-Shift"
 
-![diagrama2](https://github.com/TatianaModelGBock/Projeto-final-PB-SET-2024-CompassUol/blob/main/images/ArqLiftAndShift.drawio%20(3).png)
+![diagrama2](https://github.com/TatianaModelGBock/Projeto-final-PB-SET-2024-CompassUol/blob/main/images/ArqLiftAndShift.drawio%20(4).png)
 
 ---
 
