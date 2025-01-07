@@ -63,4 +63,38 @@ Ferramentas utilizadas:
 
 ---
 
+## **Fase 2: Modernização**
+
+### **Objetivo**
+Após a migração inicial, modernizar a arquitetura seguindo boas práticas de nuvem, com foco em escalabilidade, segurança e facilidade de gerenciamento.
+
+---
+
+### **Melhorias Planejadas**
+
+1. **Kubernetes (EKS):**  
+   - Gerenciamento de contêineres para as APIs e o frontend.  
+
+2. **Banco de Dados Gerenciado (RDS):**  
+   - Multi-AZ para alta disponibilidade.  
+
+3. **Armazenamento de Objetos (S3):**  
+   - Para arquivos estáticos, como imagens e vídeos.  
+
+4. **Reforço de Segurança:**  
+   - Configuração de IAM roles e policies.  
+   - Implementação de WAF (Web Application Firewall).  
+
+5. **Backup Automatizado:**  
+   - Utilizar snapshots do RDS e backups automáticos do S3.  
+
+---
+
+### **Passo a Passo da Modernização**
+
+1. Refatorar a aplicação para rodar em contêineres (Docker).  
+2. Configurar o EKS e realizar o deploy dos contêineres.  
+3. Migrar o banco de dados para o RDS com replicação Multi-AZ.  
+4. Migrar os arquivos estáticos para o S3.  
+5. Implementar monitoramento com **CloudWatch** e automação com **CloudFormation**.  
 
