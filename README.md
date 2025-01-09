@@ -23,40 +23,80 @@ A proposta é migrar o ambiente para a **AWS** em duas fases:
 
 ---
 
-## Fase 1: Migração “As-Is” (Lift and Shift)
+# Fase 1: Migração “As-Is” (Lift and Shift)
 
-### Visão Geral
-Na primeira fase, a ideia é levar rapidamente os servidores on-premises para a AWS, **sem grandes refatorações** de código ou mudança de arquitetura.  
-Ferramentas utilizadas:
-- **AWS MGN (Application Migration Service)**: realiza a replicação do servidor (sistema operacional, aplicações) para instâncias EC2.  
-- **AWS Replication Agent**: realiza uma migração segura de dados para dentro de uma subrede migratória.
-- **AWS EBS (Elastic Block System)**: armzenará os arquivos persistentes do banco de dados.
-- **AWS DMS (Database Migration Service)**: Migrará o banco de dados para uma estrutura RDS.
+Nesta primeira fase, a meta é **migrar rapidamente** os servidores on-premises para a AWS, **sem** modificar a arquitetura ou refatorar código. No diagrama abaixo, ilustramos o fluxo de migração: o **AWS Replication Agent** envia os dados on-premises para uma **VPC Temporária (Staging)**, enquanto o **AWS MGN** converte as VMs em instâncias EC2. Paralelamente, o **AWS DMS** cuida da migração do banco de dados para **Amazon RDS**, garantindo integridade de dados.
 
-### Passo a Passo de Migração
-1. **Planejamento**  
-   - Inventariar serviços e dependências (versão do SO, portas, bibliotecas, integrações externas).
+## Visão Geral
 
-2. **Provisionamento de Infraestrutura AWS**  
-   - **Criar VPC** com subnets públicas e privadas.  
-   - **Internet Gateway** (IGW) para subnets públicas. 
-   - **Security Groups**:  
-     - Acesso restrito ao MySQL (porta 3306) só a partir do backend.  
-     - Acesso ao backend (porta 80/443).
+- **AWS MGN (Application Migration Service)**: Replica os servidores (frontend, backend) para instâncias EC2 na AWS (Lift-and-Shift).  
+- **AWS Replication Agent**: Agente responsável por enviar dados/arquivos do ambiente on-premises para a **VPC de staging**, onde o **Replication Server** processa e armazena em **EBS** temporariamente.  
+- **AWS EBS (Elastic Block Store)**: Volumes que armazenam dados persistentes (tanto no staging quanto nas instâncias EC2 finais).  
+- **AWS DMS (Database Migration Service)**: Migra o banco MySQL on-premises para **Amazon RDS** (MySQL).  
+- **Load Balancer** (opcional): Distribui as requisições entre o Frontend (EC2) e o Backend (EC2), além de prover entrada segura (HTTP/HTTPS).  
 
-3. **Migração do Banco de Dados**
-   - **DMS** Serviço de migração de banco de dados.
-   - **RDS MySQL** (Lift and Shift com modernização mínima para preparação de ambiente).  
-   - Copiar dados via **AWS Replication Agent** (TCP 1500).  
-   - Testar **integridade** e **performance** do banco no ambiente de destino.
+## Passo a Passo de Migração
 
-5. **Migração de Frontend/Backend**  
-   - Usar **AWS MGN** para replicar as máquinas on-premises em instâncias EC2.  
-   - Usar **AWS EBS** para hospedar os arquivos advindos das máquinas
+### 1. Planejamento
 
-6. **Teste e Validação**  
-   - Apontar subdomínio (ex.: `test.minhaempresa.com`) para o IP ou ALB da aplicação na AWS.  
-   - Verificar logs, monitorar performance.
+1. **Inventário**  
+   - Catalogar os serviços rodando on-premises:  
+     - Frontend (React)  
+     - Backend (Nginx + APIs)  
+     - Banco MySQL  
+     - Versões de SO, bibliotecas, portas de rede (TCP 443, TCP 1500, TCP 3306 etc.).
+2. **Janela de Manutenção e Riscos**  
+   - Determinar quanto tempo de parada é tolerável.  
+   - Planejar rollback (em caso de falha).
+
+### 2. Provisionamento de Infraestrutura AWS
+
+1. **Criar VPC de Staging (Temporária)**  
+   - Subnet pública para receber o **Replication Server**.  
+   - **Replication Server** irá receber dados on-prem (via AWS Replication Agent, porta TCP 1500).
+2. **Criar VPC Final**  
+   - **Subnets Públicas**: onde ficará o **Frontend EC2** e **Load Balancer**.  
+   - **Subnets Privadas**: onde ficará o **Backend EC2** e o **RDS**.  
+   - **Internet Gateway (IGW)** para as subnets públicas, **NAT Gateway** se as instâncias privadas precisarem acessar a internet.  
+3. **Security Groups**  
+   - Restringir porta 3306 (MySQL) para ser acessível somente pelo Backend.  
+   - Permitir portas 80/443 (HTTP/HTTPS) vindas do Load Balancer para o Backend/Frontend.
+
+### 3. Migração do Banco de Dados
+
+1. **Provisionar Amazon RDS (MySQL)**  
+   - Selecione a versão do MySQL compatível.  
+   - Para um lift and shift TOTAL, será utilizado um RDS single-AZ
+2. **Configurar AWS DMS**  
+   - Criar um **endpoint de origem** (MySQL on-premises) e um **endpoint de destino** (RDS MySQL).  
+   - Migrar esquemas, tabelas e dados (full load + CDC, replicação contínua).
+3. **Testar**  
+   - Validar performance e integridade do banco no RDS.
+
+### 4. Migração de Frontend e Backend
+
+1. **Instalar AWS Replication Agent on-premises**  
+   - Configurar para enviar dados/VMs para o **Replication Server** na VPC Staging.  
+2. **AWS MGN**  
+   - Monitora e converte os dados armazenados no Replication Server em AMIs.  
+   - Gera instâncias EC2 correspondentes (Frontend e Backend) na **VPC Final**.
+3. **Volumes EBS**  
+   - Os dados de cada servidor migrado ficam em **EBS** associados às instâncias EC2 resultantes.
+
+### 5. Teste e Validação
+
+1. **DNS Temporário**  
+   - Aponte um subdomínio (ex.: wwww.fastengineering.com.br`) para o **Load Balancer** ou para o IP público do **EC2 Frontend** (caso não use LB).  
+   - Verifique se o backend e o RDS estão respondendo corretamente.
+2. **Checar Logs e Performance**  
+   - Monitorar a saúde das instâncias EC2 (CPU, memória) e do RDS (latência, conexões).  
+   - Verificar se APIs, frontend e DB estão funcionando sem erros.
+
+---
+
+## Conclusão
+
+Nesta etapa de **Lift and Shift**, os servidores (Frontend/Backend) e o banco de dados MySQL foram migrados para **AWS EC2** e **Amazon RDS** respectivamente, **sem** grandes alterações na aplicação. O diagrama ilustra a transição via **Replication Server** (VPC Staging) e o **AWS MGN** para as instâncias EC2 finais, enquanto o **AWS DMS** garante a transferência segura dos dados do banco para o RDS.
 
 
 ## Diagrama “Lift-and-Shift"
