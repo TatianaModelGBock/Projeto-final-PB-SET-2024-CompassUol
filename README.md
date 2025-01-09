@@ -105,106 +105,140 @@ Nesta etapa de **Lift and Shift**, os servidores (Frontend/Backend) e o banco de
 
 ---
 
-## **Fase 2: Modernização**
+# Fase 2: Modernização com EKS (Elastic Kubernetes Service)
 
----
 ## Visão Geral
 
-### DNS e Distribuição de Conteúdo:
-- **Route 53**: Gerenciamento de DNS.
-- **CloudFront**: Distribuição de conteúdo para otimizar o acesso global.
-- **WAF (Web Application Firewall)**: Proteção contra ataques como SQL Injection e Cross-Site Scripting.
+- **Amazon EKS** (Elastic Kubernetes Service): Orquestração de contêineres, facilitando implantação de múltiplos microserviços.  
+- **Amazon RDS** (MySQL) em Multi-AZ: Banco de dados gerenciado com backup e alta disponibilidade.  
+- **Amazon S3**: Armazenamento de objetos estáticos (imagens, PDFs etc.) e/ou backups.  
+- **CI/CD com CodePipeline, CodeBuild, CodeCommit, ECR**: Fluxo de entrega contínua para as imagens Docker das aplicações.  
+- **Security**: AWS WAF, Security Groups, IAM Roles, Secrets Manager e KMS para criptografia.
 
-### Orquestração de Contêineres:
-- **EKS Managed Cluster**: Gerencia os clusters Kubernetes, reduzindo a necessidade de configuração manual.
-- **Auto Scaling Group**: Escala os nós do cluster automaticamente com base na demanda.
-- **Horizontal Pod Autoscaler**: Ajusta a quantidade de pods com base no consumo de recursos, como CPU e memória.
+---
 
-### Redes:
-- **Subnets Públicas e Privadas**:
-- **NAT Gateway**: Permite que instâncias privadas acessem a Internet.
-- **Load Balancer (ALB)**: Distribui o tráfego entre os pods e garante alta disponibilidade.
+## Passo a Passo
 
-### Banco de Dados:
-- **RDS MySQL com Réplica**: Banco de dados relacional para armazenar dados persistentes com replicação Multi-AZ para alta disponibilidade.
+### 1. Preparar o Ambiente de Contêineres
 
-### Segurança:
-- **AWS Secrets Manager**: Gerencia segredos, como credenciais de banco de dados.
-- **AWS KMS**: Gerenciamento de chaves para criptografia.
-- **IAM Roles**: Configuração de roles e policies para controle de acesso.
+1. **Criar Cluster EKS**
+   - Usar **eksctl**, **Terraform**, ou **CloudFormation** para criar o cluster.  
+   - Definir subnets privadas (worker nodes) e subnets públicas (para o Load Balancer).  
+   - Habilitar **Cluster Autoscaler** para redimensionar nós conforme a demanda.
 
-### Armazenamento de Objetos:
-- **S3**: Armazena artefatos e arquivos estáticos, como imagens e vídeos.
+2. **Configurar VPC e Subnets**
+   - As **subnets privadas** recebem os pods do Kubernetes (sem IP público).  
+   - As **subnets públicas** hospedam o Application Load Balancer (ALB) ou NAT Gateways (se for preciso).  
+   - **Internet Gateway (IGW)** conectado às subnets públicas para tráfego externo.
 
-### Monitoramento e Armazenamento:
-- **CloudWatch**: Monitora métricas de infraestrutura e aplicações.
-- **S3**: Armazena artefatos e backups.
+3. **Criar e Configurar os Worker Nodes**
+   - Crie um **Auto Scaling Group** para os nós do EKS (EC2).  
+   - Defina o tipo de instância (ex.: `m5.large`), capacidade mínima e máxima (ex.: 2 a 6 nós).  
+   - Vincule a **IAM Role** que permita operações do Kubernetes (por exemplo, criar logs em CloudWatch).
 
-### CI/CD e Controle de Código:
-- **CodeCommit**: Repositório de código fonte.
-- **CodeBuild e CodePipeline**: Automação do processo de construção e implantação.
-- **IAM Roles**: Controle de permissões para desenvolvedores e equipes.
+---
 
-## Objetivos
+### 2. Containerizar as Aplicações
 
-1. **Escalabilidade**: Escalar horizontalmente as aplicações através de pods (HPA) e aumentar/diminuir nós do EKS (Cluster Auto Scaling).  
-2. **Disponibilidade**: Implantar o aplicativo em múltiplas zonas de disponibilidade (Multi-AZ), com RDS MySQL em modo Multi-AZ ou com réplicas para failover.  
-3. **Automação**: Usar uma pipeline de CI/CD para **build**, **teste** e **deploy** contínuos.  
-4. **Segurança**: Garantir criptografia e proteção em múltiplas camadas (WAF, ALB, subnets privadas, Secrets Manager etc.).  
-5. **Observabilidade**: Centralizar logs e métricas no CloudWatch, facilitando troubleshooting e análise de performance.
+1. **Dockerfiles**
+   - Criar Dockerfile(s) para o **Backend** (APIs, Nginx) e, caso exista, para o **Frontend** (React).
+   - 
+2. **Armazenar Imagens no Amazon ECR**
+   - Criar repositório ECR (`backend-api`, `frontend-app`, etc.).  
+   - Executar `docker build` e `docker push` para enviar as imagens.  
+   - Usar tags para versionamento (`v1.0.0`, `latest`, etc.).
 
-# Passo a Passo da Modernização
+3. **Configurar Variáveis de Ambiente**
+   - Endpoints do banco (RDS), credenciais do Secrets Manager, URLs de APIs etc.  
+   - Evite armazenar senhas direto no Dockerfile ou no código.
 
-## 1. Planejamento
-- **Mapeamento de serviços**:
-  - Identificar componentes da aplicação e suas dependências.
-  - Validar compatibilidade com contêineres (Docker).
-- **Desenho de arquitetura**:
-  - Criar diagramas e fluxos com a nova infraestrutura.
-  - Definir requisitos de rede, segurança e escalabilidade.
 
-## 2. Criação do Cluster EKS
-- Configurar um cluster gerenciado pela AWS utilizando o EKS:
-  - Criar subnets públicas e privadas para os nós do cluster.
-  - Associar um NAT Gateway para permitir comunicação segura com serviços externos.
+### 3. Pipeline de CI/CD
 
-## 3. Contêinerização da Aplicação
-- Criar Dockerfiles para cada serviço da aplicação:
-  - Backend (API).
-  - Frontend (interface).
-- Armazenar as imagens no **Amazon ECR (Elastic Container Registry)**.
+1. **AWS CodeCommit / Git**  
+   - Repositório de código para as aplicações.  
+   - Os desenvolvedores fazem **push** no branch principal (ex.: `main`).
 
-## 4. Configuração do Kubernetes
-- Criar manifests YAML para os seguintes recursos:
-  - **Deployments**:
-    - Configurar réplicas para alta disponibilidade.
-    - Associar pods a volumes persistentes para dados críticos.
-  - **Services**:
-    - Configurar serviços para expor os pods internamente (ClusterIP) e externamente (LoadBalancer).
-  - **Ingress**:
-    - Utilizar o ALB para rotear tráfego HTTP/HTTPS.
-  - **Secrets e ConfigMaps**:
-    - Gerenciar credenciais e configurações externas.
+2. **AWS CodeBuild**  
+   - Etapa de build que:  
+     1. Faz `docker build` das imagens,  
+     2. Sobe para o ECR,  
+     3. (Opcional) Executa testes de unidade/integração.
 
-## 5. Implementação de Melhoria de Segurança
-- **Reforço de Segurança**:
-  - Configuração de IAM roles e policies.
-  - Implementação de WAF para proteção contra ataques.
+3. **AWS CodePipeline**  
+   - Orquestra o fluxo **Source** (CodeCommit) → **Build** (CodeBuild) → **Deploy** (CloudFormation ou `kubectl apply`).  
+   - Ao final, o EKS recebe a nova versão do deployment de contêiner.
 
-## 6. Backup Automatizado
-- Utilizar snapshots do RDS e backups automáticos do S3.
 
-## 7. CI/CD e Automação
-- **Pipeline CI/CD**:
-  - Configurar o **CodePipeline** para automatizar a construção e implantação das imagens Docker.
-  - Utilizar o **CodeBuild** para criar e publicar imagens no ECR.
-  - Implantar as atualizações no cluster EKS automaticamente.
-- **CloudFormation**:
-  - Utilizar CloudFormation para automatizar a infraestrutura e deployments.
+### 4. Implantar Aplicações no EKS
 
-## 8. Monitoramento e Logs
-- Configurar **CloudWatch Logs**:
-  - Capturar logs dos pods e métricas do cluster.
-- Utilizar ferramentas de monitoramento como **Prometheus** e **Grafana**:
-  - Visualizar métricas personalizadas de aplicação e infraestrutura.
+1. **Manifests Kubernetes**  
+   - Criar arquivos YAML para `Deployment`, `Service`, `Ingress`, etc.  
 
+2. **Ingress Controller (ALB)**  
+   - Se quiser expor via ALB Ingress Controller, criar um `Ingress` definindo rotas (e.g., `/api` -> backend service).  
+   - O Ingress Controller gera o Application Load Balancer associado, colocando-o em subnets públicas.
+
+3. **Horizontal Pod Autoscaler (HPA)**  
+   - Configurar o HPA para cada deployment, definindo escalonamento baseado em CPU/Memória ou métricas customizadas.
+
+
+### 5. Integração com RDS e S3
+
+1. **Banco de Dados**  
+   - Use o RDS MySQL migrado na Fase 1 ou crie um novo (Multi-AZ, backups automáticos).  
+   - Ajuste o **Security Group** para aceitar conexões somente do EKS (via IAM Roles for Service Accounts ou SGs).  
+   - Ativar **SSL** (opcional) para criptografia em trânsito.
+
+2. **Armazenamento de Arquivos (S3)**  
+   - Se a aplicação manipula uploads de usuários (imagens, PDFs), salve no **Amazon S3**.  
+   - Configure um bucket e use **bucket policies** ou IAM roles para permitir acesso somente pelos pods.
+
+3. **Secrets Manager**  
+   - Armazene credenciais (usuário/senha do RDS, tokens de API etc.)  
+   - Use IRSA (IAM Roles for Service Accounts) para que os pods possam ler segredos de forma segura.
+
+### 6. Segurança e Observabilidade
+
+1. **CloudWatch Logs e Metrics**  
+   - Instale o **CloudWatch Agent** ou configure **Container Insights** para coletar logs e métricas de pods.  
+   - Crie alarmes no CloudWatch (ex.: CPU, memória, erro 5xx no ALB).
+
+2. **WAF + CloudFront**  
+   - Se a aplicação exigir conteúdo estático e cache global, use o **CloudFront** como CDN.  
+   - Ative **AWS WAF** para mitigar ameaças em camada 7 (SQLi, XSS etc.).
+
+3. **IAM Roles e KMS**  
+   - Restrinja acessos (princípio de menor privilégio).  
+   - Se for necessário armazenar dados sensíveis, encriptar com **AWS KMS**.
+
+4. **GuardDuty, AWS Config** (opcional)  
+   - Para detecção de ameaças e conformidade.  
+   - Receber alertas de configurações indevidas ou acessos suspeitos.
+
+
+### 7. Teste, Monitoramento e Otimização
+
+1. **Testar Aplicação**  
+   - Validar rotas do Ingress, ver se o DNS está corretamente apontando para o ALB.  
+   - Checar se pods escalam e o cluster autoscaling funciona.
+
+2. **Monitorar Custos**  
+   - Acompanhar uso das instâncias (muito sub-utilizadas ou saturadas?).  
+   - Considerar Savings Plans ou Reserved Instances se houver workloads de longa duração.
+
+3. **Refinar Deploy**  
+   - Ajustar políticas de release (blue/green, canary) caso queiram zero downtime nas implantações.  
+   - Adicionar testes automatizados no pipeline.
+
+
+## Conclusão
+
+Nesta fase, o ambiente deixa de ser “apenas Lift and Shift” e passa a adotar **princípios cloud-native**:
+- **EKS** para orquestração de contêineres,  
+- **RDS** para banco gerenciado,  
+- **S3** para arquivos e backups,  
+- **CI/CD** robusto com CodePipeline e CodeBuild,  
+- **Segurança** em múltiplas camadas (WAF, SG, IAM, KMS).
+
+**Benefícios esperados** incluem **melhor escalabilidade**, **redução de custos de manutenção** e **agilidade** na entrega de novas features (devops).
