@@ -108,7 +108,7 @@ Nesta etapa de **Lift and Shift**, os servidores (Frontend/Backend) e o banco de
 ## **Fase 2: Modernização**
 
 ---
-# Introdução
+## Visão Geral
 
 ### DNS e Distribuição de Conteúdo:
 - **Route 53**: Gerenciamento de DNS.
