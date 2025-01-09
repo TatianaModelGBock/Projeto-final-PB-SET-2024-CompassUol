@@ -235,10 +235,14 @@ Nesta etapa de **Lift and Shift**, os servidores (Frontend/Backend) e o banco de
 ## Conclusão
 
 Nesta fase, o ambiente deixa de ser “apenas Lift and Shift” e passa a adotar **princípios cloud-native**:
-- **EKS** para orquestração de contêineres,  
-- **RDS** para banco gerenciado,  
-- **S3** para arquivos e backups,  
-- **CI/CD** robusto com CodePipeline e CodeBuild,  
+- **EKS** para orquestração de contêineres.
+- **RDS** para banco gerenciado.
+- **S3** para arquivos e backups.
+- **CI/CD** robusto com CodePipeline e CodeBuild.
 - **Segurança** em múltiplas camadas (WAF, SG, IAM, KMS).
+
+## Diagrama "Modernização EKS"
+
+![diagrama}(https://github.com/TatianaModelGBock/Projeto-final-PB-SET-2024-CompassUol/blob/main/images/Moderniza%C3%A7%C3%A3o_Kubernetes.drawio%20(5).png)
 
 **Benefícios esperados** incluem **melhor escalabilidade**, **redução de custos de manutenção** e **agilidade** na entrega de novas features (devops).
