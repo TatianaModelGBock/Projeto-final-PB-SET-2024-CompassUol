@@ -67,11 +67,8 @@ Ferramentas utilizadas:
 
 ## **Fase 2: Modernização**
 
-### **Objetivo**
-Após a migração inicial, modernizar a arquitetura seguindo boas práticas de nuvem, com foco em escalabilidade, segurança e facilidade de gerenciamento.
-
 ---
-# Componentes Principais
+# Introdução
 
 ### DNS e Distribuição de Conteúdo:
 - **Route 53**: Gerenciamento de DNS.
@@ -108,6 +105,14 @@ Após a migração inicial, modernizar a arquitetura seguindo boas práticas de 
 - **CodeBuild e CodePipeline**: Automação do processo de construção e implantação.
 - **IAM Roles**: Controle de permissões para desenvolvedores e equipes.
 
+## Objetivos
+
+1. **Escalabilidade**: Escalar horizontalmente as aplicações através de pods (HPA) e aumentar/diminuir nós do EKS (Cluster Auto Scaling).  
+2. **Disponibilidade**: Implantar o aplicativo em múltiplas zonas de disponibilidade (Multi-AZ), com RDS MySQL em modo Multi-AZ ou com réplicas para failover.  
+3. **Automação**: Usar uma pipeline de CI/CD para **build**, **teste** e **deploy** contínuos.  
+4. **Segurança**: Garantir criptografia e proteção em múltiplas camadas (WAF, ALB, subnets privadas, Secrets Manager etc.).  
+5. **Observabilidade**: Centralizar logs e métricas no CloudWatch, facilitando troubleshooting e análise de performance.
+
 # Passo a Passo da Modernização
 
 ## 1. Planejamento
@@ -122,8 +127,6 @@ Após a migração inicial, modernizar a arquitetura seguindo boas práticas de 
 - Configurar um cluster gerenciado pela AWS utilizando o EKS:
   - Criar subnets públicas e privadas para os nós do cluster.
   - Associar um NAT Gateway para permitir comunicação segura com serviços externos.
-- **Configurar permissões**:
-  - Associar roles do IAM para nós do cluster e pods.
 
 ## 3. Contêinerização da Aplicação
 - Criar Dockerfiles para cada serviço da aplicação:
