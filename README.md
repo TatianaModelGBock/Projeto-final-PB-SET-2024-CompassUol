@@ -155,17 +155,14 @@ Nesta etapa de **Lift and Shift**, os servidores (Frontend/Backend) e o banco de
 
 ### 3. Pipeline de CI/CD
 
-1. **AWS CodeCommit / Git**  
-   - Repositório de código para as aplicações.  
-   - Os desenvolvedores fazem **push** no branch principal (ex.: `main`).
 
-2. **AWS CodeBuild**  
+1. **AWS CodeBuild**  
    - Etapa de build que:  
      1. Faz `docker build` das imagens,  
      2. Sobe para o ECR,  
      3. (Opcional) Executa testes de unidade/integração.
 
-3. **AWS CodePipeline**  
+2. **AWS CodePipeline**  
    - Orquestra o fluxo **Source** (CodeCommit) → **Build** (CodeBuild) → **Deploy** (CloudFormation ou `kubectl apply`).  
    - Ao final, o EKS recebe a nova versão do deployment de contêiner.
 
